@@ -6,19 +6,22 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define OLED_RESET -1
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET -1   // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
+//button pins
 #define change_pin 4
 #define wifi_reset 5
 
+//default display status
 bool digital = true;
 bool analog = false;
 
 WiFiManager wifiManager;
-bool isconnected = false;
+bool isconnected = false; //wifi status
 
-int timezone = 5 * 3600;
+int timezone = 5 * 3600;  //seting timezone +5 GMT
 int dst = 0;
 unsigned long current_time = 0;
 unsigned long previous_time = 0;
@@ -38,7 +41,7 @@ void setup_wifi(){
 void setup() {
   Serial.begin(115200);
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { //initializing oled
     Serial.println(F("SSD1306 allocation failed"));
     for(;;);
   }
@@ -52,11 +55,11 @@ void setup() {
 }
 
 void loop() {
-  while(WiFi.status() != WL_CONNECTED){
+  while(WiFi.status() != WL_CONNECTED){ //check if wifi is connected
     isconnected = false;
     wifiManager.process();
   }
-  if(!isconnected){
+  if(!isconnected){ //setup time
     isconnected = true;
     digital = true;
     configTime(timezone, dst, "pool.ntp.org","time.nist.gov");
@@ -64,7 +67,7 @@ void loop() {
     delay(1000);
     }
   }
-  if(digitalRead(change_pin) == LOW){
+  if(digitalRead(change_pin) == LOW){ //reading pins to change display type
     if(digital){
       digital = false;
       analog = true;
@@ -77,7 +80,7 @@ void loop() {
     display.clearDisplay();
   }
 
-  if(digitalRead(wifi_reset) == LOW){
+  if(digitalRead(wifi_reset) == LOW){ //reset wifi if wifi_reset button is pressed
     wifiManager.resetSettings();
     display.clearDisplay();
     display.setTextSize(2);
@@ -92,12 +95,12 @@ void loop() {
     analog = false;
   }
   
-  if(isconnected){
+  if(isconnected){  //if wifi connected update time on oled
     time_t now = time(nullptr);
     struct tm* p_tm = localtime(&now);
-    if(digital){
+    if(digital){  //display digital clock
       current_time = millis();
-      if(current_time-previous_time > 990){
+      if(current_time-previous_time > 990){ //wait for almost 1 sec to update display
         // Clear the buffer.
         display.clearDisplay();
         display.setTextSize(3);
@@ -129,7 +132,7 @@ void loop() {
         previous_time = current_time;
       }
     }
-    else if(analog){
+    else if(analog){ //display analog clock
       int r = 33;
       display.drawCircle((display.width()/2)-10, display.height()/2, 2, WHITE);
       
